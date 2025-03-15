@@ -74,31 +74,31 @@ services:
 #      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka1:19092,PLAINTEXT://kafka2:19093,PLAINTEXT://kafka3:19094'
 #      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
 
-#  app:
-#    image: openjdk:17-jdk-slim
-#    container_name: ${SPRING_APPLICATION_NAME}
-#    ports:
-#      - "${SERVER_PORT}:${SERVER_PORT}"
-#    env_file:
-#      - .env
-#    volumes:
-#      - ./target/${JAR_FILE}:/app/${JAR_FILE}
-#    restart: always
-#    working_dir: /app
-#    command: [ "java", "-jar", "${JAR_FILE}" ]
-#    depends_on:
-#      - db
+  event-service:
+    image: openjdk:17-jdk-slim
+    container_name: ${SPRING_APPLICATION_NAME}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    env_file:
+      - .env
+    volumes:
+      - ./target/${JAR_FILE}:/app/${JAR_FILE}
+    restart: always
+    working_dir: /app
+    command: [ "java", "-jar", "${JAR_FILE}" ]
+    depends_on:
+      - event-db
 #      - zoo1
 #      - kafka1
 #      - kafka-ui
-#      - redis
-##      - kafka-schema-registry
-#    networks:
-#      - ticket-box
+      - event-redis
+#      - kafka-schema-registry
+    networks:
+      - ticket-box
 
-  event_db:
+  event-db:
     image: postgres:15.3
-    container_name: event_db
+    container_name: event-db
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
@@ -115,9 +115,9 @@ services:
     networks:
       - ticket-box
 
-  event_redis:
+  event-redis:
     image: redis:6.2-alpine
-    container_name: event_redis
+    container_name: event-redis
     ports:
       - '${SPRING_REDIS_PORT}:${SPRING_REDIS_PORT}'
     command: redis-server --save 20 1 --loglevel warning --port ${SPRING_REDIS_PORT}
@@ -132,5 +132,5 @@ volumes:
 
 networks:
   ticket-box:
-    name: ticket-box
+    external: true
 
